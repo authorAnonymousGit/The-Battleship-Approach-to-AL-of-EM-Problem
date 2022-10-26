@@ -40,11 +40,9 @@ SourceTask="Textual/Abt-Buy"
 # Mode="top_k_cliques"
 # Modes=("battleships_ws_k" "battleships_ws_b" "battleships" "top_k_DTAL" "random" "all_D")
 
-#Modes=("battleships_ws_b_alpha=0.0" "battleships_ws_b_alpha=0.25" \
-#"battleships_ws_b_alpha=0.5" "battleships_ws_b_alpha=0.75" "battleships_ws_b_alpha=1.0"
-#"top_k_DTAL" "random" "dummy")
-
-Modes=("all_D" "dummy")
+Modes=("battleships_ws_b_alpha=0.0" "battleships_ws_b_alpha=0.25" \
+"battleships_ws_b_alpha=0.5" "battleships_ws_b_alpha=0.75" "battleships_ws_b_alpha=1.0" \
+"random" "dummy")
 
 
 #InputPath="data/er_magellan/Structured/Amazon-Google/"
@@ -73,7 +71,7 @@ criterion_type="pagerank"
 declare -i Intent=0
 declare -i MaxLen=512
 declare -i Batch=12
-declare -i N_Epochs=10
+declare -i N_Epochs=12
 
 
 for (( seed=1; seed<=Seeds; seed++ ))

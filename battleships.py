@@ -19,7 +19,7 @@ from sklearn.metrics import silhouette_score
 class battleships_graph:
     def __init__(self, poolers_paths, k, seed, files_path,
                  output_path, iteration, criterion='pagerank',
-                 mode='top_k', beta=0.5, lsh_iterations=10, dim=768,
+                 mode='top_k', beta=0.5, dim=768,
                  min_cc_ratio=0.05, max_cc_ratio=0.15,
                  nearest_param=25, treat_weak_labels=True):
         torch.manual_seed(seed)
@@ -32,7 +32,6 @@ class battleships_graph:
         self.beta = beta
         self.k = k
         self.dim = dim
-        self.lsh_iterations = lsh_iterations
         self.criterion = criterion
         self.mode = mode
         self.nearest_param = nearest_param
@@ -54,9 +53,6 @@ class battleships_graph:
         self.pos_budget = min(max(round(self.k * (0.8 - 0.05 * iteration)), round(0.5 * self.k)), len(self.pos_preds_ids))
         self.min_cc_ratio = min_cc_ratio
         self.max_cc_ratio = max_cc_ratio
-        # self.neg_graph, self.neg_connected_components, self.neg_ccs_available_pool_sizes = self.from_lsh2graph_type(0)
-        # self.pos_graph, self.pos_connected_components, self.pos_ccs_available_pool_sizes = self.from_lsh2graph_type(1)
-        # self.het_graph, self.het_connected_components, self.het_ccs_available_pool_sizes = self.from_lsh2graph_type(2)
         self.neg_graph, self.neg_connected_components, self.neg_ccs_available_pool_sizes = self.cluster_and_graph(0)
         self.pos_graph, self.pos_connected_components, self.pos_ccs_available_pool_sizes = self.cluster_and_graph(1)
         self.het_graph, self.het_connected_components, self.het_ccs_available_pool_sizes = self.cluster_and_graph(2)
@@ -218,120 +214,6 @@ class battleships_graph:
         for curr_ind, pooler_id in enumerate(rel_ids):
             ids_mapping[curr_ind] = pooler_id
         return ids_mapping
-
-    # def from_lsh2graph_type(self, label_type):
-    #     rel_ids, min_val, max_val = self.find_rel_ids_min_max(label_type)
-    #     suffix = str(label_type)
-    #     buckets2poolers = self.create_buckets(rel_ids, min_val)
-    #     final_buckets2poolers, bucket_parents = self.iteative_bucketing(buckets2poolers, min_val, max_val)
-    #     graph = self.initialize_graph(rel_ids)
-    #     graph = self.connect_nodes(graph, final_buckets2poolers, label_type)
-    #     connected_components = self.create_connected_components(graph)
-    #     light_conncted_components = self.get_light_connected_components(connected_components)
-    #     ccs_available_pool_sizes = self.calc_CCS_available_pool_sizes(connected_components)
-    #     self.save_to_pkl([final_buckets2poolers, light_conncted_components,
-    #                       ccs_available_pool_sizes, buckets2poolers, bucket_parents],
-    #                      ["final_buckets2poolers" + suffix, "orig_connected_components(light)" + suffix,
-    #                       "ccs_available_pool_sizes" + suffix, "orig_buckets2poolers" + suffix,
-    #                       "bucket_parents" + suffix])
-    #     return graph, connected_components, ccs_available_pool_sizes
-    #
-    # def create_buckets(self, rel_poolers_ids, min_val):
-    #     if len(rel_poolers_ids) == 0:
-    #         return dict()
-    #     rel_poolers = {pooler_id: pooler for pooler_id, pooler in
-    #                    self.poolers.items() if pooler_id in rel_poolers_ids}
-    #     vectors_num = max(int(log2((len(rel_poolers_ids)) / max(min_val, 1))), 1)
-    #     buckets2poolers_dict = defaultdict(list)
-    #     random_vecs = np.random.randn(vectors_num, self.dim)
-    #     for pooler_id, pooler_vec in rel_poolers.items():
-    #         bucket_id = self.classify_pooler(pooler_vec, random_vecs)
-    #         buckets2poolers_dict[bucket_id].append(pooler_id)
-    #     return buckets2poolers_dict
-    #
-    # def iteative_bucketing(self, buckets2poolers, min_val, max_val):
-    #     lsh_iter = 0
-    #     final_buckets2poolers = dict()
-    #     bucket_parents = dict()
-    #     while lsh_iter < self.lsh_iterations and len(buckets2poolers) > 0:
-    #         buckets2poolers, final_buckets2poolers, bucket_parents = self.handle_legit_buckets(buckets2poolers,
-    #                                                                                            final_buckets2poolers,
-    #                                                                                            bucket_parents,
-    #                                                                                            str(lsh_iter), min_val,
-    #                                                                                            max_val)
-    #         buckets2poolers, final_buckets2poolers, bucket_parents = self.handle_large_bucket(buckets2poolers,
-    #                                                                                           final_buckets2poolers,
-    #                                                                                           bucket_parents,
-    #                                                                                           str(lsh_iter), min_val,
-    #                                                                                           max_val)
-    #         rel_poolers_ids = self.find_rel_poolers(buckets2poolers)
-    #         if len(rel_poolers_ids):
-    #             lsh_iter += 1
-    #             buckets2poolers = self.create_buckets(rel_poolers_ids, min_val)
-    #         else:
-    #             break
-    #     final_buckets2poolers, bucket_parents = self.merge_buckets2poolers(final_buckets2poolers,
-    #                                                                        buckets2poolers,
-    #                                                                        bucket_parents,
-    #                                                                        str(lsh_iter))
-    #     return final_buckets2poolers, bucket_parents
-    #
-    # @ staticmethod
-    # def clean_buckets2poolers(buckets2poolers):
-    #     if len(buckets2poolers) > 0:
-    #         merged_bucket = []
-    #         buckets2poolers_copy = buckets2poolers.copy()
-    #         for bucket_id, bucket in buckets2poolers_copy.items():
-    #             merged_bucket.extend(bucket)
-    #             buckets2poolers.pop(bucket_id)
-    #         buckets2poolers['final_lsh_iter'] = merged_bucket
-    #     return buckets2poolers
-    #
-    # def merge_buckets2poolers(self, final_buckets2poolers, buckets2poolers, bucket_parents, lsh_iter):
-    #     new_bucket_id = len(final_buckets2poolers)
-    #     buckets2poolers = self.clean_buckets2poolers(buckets2poolers)
-    #     for bucket_id, bucket in buckets2poolers.items():
-    #         final_buckets2poolers['lshIter' + lsh_iter + '_' + str(new_bucket_id)] = bucket
-    #         bucket_parents['lshIter' + lsh_iter + '_' + str(new_bucket_id)] = bucket_id
-    #         new_bucket_id += 1
-    #     return final_buckets2poolers, bucket_parents
-    #
-    # @staticmethod
-    # def find_rel_poolers(buckets2poolers):
-    #     rel_poolers_ids = set()
-    #     for bucket in buckets2poolers.values():
-    #         rel_poolers_ids.update(bucket)
-    #     return rel_poolers_ids
-    #
-    # @staticmethod
-    # def handle_legit_buckets(buckets2poolers, final_buckets2poolers, bucket_parents, lsh_iter, min_val, max_val):
-    #     buckets2poolers_copy = buckets2poolers.copy()
-    #     new_bucket_id = len(final_buckets2poolers)
-    #     for bucket_id, bucket in buckets2poolers_copy.items():
-    #         if min_val < len(bucket) < max_val:
-    #             final_buckets2poolers['lshIter' + lsh_iter + '_' + str(new_bucket_id)] = bucket
-    #             bucket_parents['lshIter' + lsh_iter + '_' + str(new_bucket_id)] = bucket_id
-    #             buckets2poolers.pop(bucket_id)
-    #             new_bucket_id += 1
-    #     return buckets2poolers, final_buckets2poolers, bucket_parents
-    #
-    # def handle_large_bucket(self, buckets2poolers, final_buckets2poolers, bucket_parents, lsh_iter, min_val, max_val):
-    #     buckets2poolers_copy = buckets2poolers.copy()
-    #     new_bucket_id = len(final_buckets2poolers)
-    #     internal_bucket_id = 0
-    #     for bucket_id, bucket in buckets2poolers_copy.items():
-    #         if len(bucket) >= max_val:
-    #             new_buckets = self.create_buckets(bucket, min_val)
-    #             buckets2poolers.pop(bucket_id)
-    #             for bucket_id2, bucket2 in new_buckets.items():
-    #                 if min_val < len(bucket) < max_val:
-    #                     final_buckets2poolers['lshIter' + lsh_iter + '_' + str(new_bucket_id)] = bucket2
-    #                     bucket_parents['lshIter' + lsh_iter + '_' + str(new_bucket_id)] = bucket_id
-    #                     new_bucket_id += 1
-    #                 else:
-    #                     buckets2poolers[str(internal_bucket_id) + '_' + bucket_id2] = bucket2
-    #                     internal_bucket_id += 1
-    #     return buckets2poolers, final_buckets2poolers, bucket_parents
 
     @staticmethod
     def create_connected_components(graph):
