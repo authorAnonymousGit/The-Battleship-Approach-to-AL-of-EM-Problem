@@ -8,7 +8,7 @@ We treat it as battleship game hunting indicative samples, focusing on positive 
 
 In this work, we use [DITTO](https://github.com/megagonlabs/ditto) as a black box producing hidden representations for candidate pairs, as well as predicted labels and confidence values. 
 
-![Battleship_frameword](framework_fig.PNG)
+![Battleship_frameword](Battleship_Framework.PNG)
 
 ## Requirements
 1. The same as given in [DITTO](https://github.com/megagonlabs/ditto)
