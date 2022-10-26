@@ -24,8 +24,8 @@ export CUDA_VISIBLE_DEVICES=0
 TaskName="Textual/Abt-Buy"
 SourceTask="Textual/Abt-Buy"
 
-# Possible modes: "random", "top_k_threshold", "battleships", "all_D", "top_k_DTAL", "top_k_DTAL_without"
-# top_k_DTAL_without is the same as top_k_DTAL without the weak supervision
+# Possible modes: "battleships_ws_b_alpha=?" (where ? is the value of alpha), "random",  "all_D", "top_k_DTAL",
+
 
 # More options:
 
@@ -37,8 +37,6 @@ SourceTask="Textual/Abt-Buy"
 
 # For "all_D" and "*mode*/only_selected" set Iterations = 0
 
-# Mode="top_k_cliques"
-# Modes=("battleships_ws_k" "battleships_ws_b" "battleships" "top_k_DTAL" "random" "all_D")
 
 Modes=("battleships_ws_b_alpha=0.0" "battleships_ws_b_alpha=0.25" \
 "battleships_ws_b_alpha=0.5" "battleships_ws_b_alpha=0.75" "battleships_ws_b_alpha=1.0" \
